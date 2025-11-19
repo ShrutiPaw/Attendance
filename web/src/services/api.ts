@@ -1,18 +1,14 @@
 import axios from "axios";
 import { safeStorage } from "../utils/storage";
 
-// Use the same backend URL as the mobile app
-// Prefer environment variable (set on Vercel). If not present, fall back to same-origin '/api'
-const BASE_URL =
-  (import.meta as any).env.VITE_API_URL ||
-  (typeof window !== "undefined"
-    ? `${window.location.origin}/api`
-    : "http://localhost:3000/api");
+// Always use environment variable in production
+const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 
+// Ensure no trailing slash to avoid double slashes
 const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: BASE_URL.replace(/\/+$/, ""),
   timeout: 10000,
-});
+}); 
 
 // Request interceptor to add auth token
 api.interceptors.request.use(
