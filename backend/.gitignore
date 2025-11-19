@@ -1,0 +1,14 @@
+# Node.js
+node_modules/
+npm-debug.log*
+.env
+.DS_Store
+*.log
+pids
+logs
+*.pid
+*.seed
+*.pid.lock
+.npm
+.eslintcache
+.node_repl_history
