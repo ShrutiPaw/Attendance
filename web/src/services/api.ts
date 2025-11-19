@@ -2,34 +2,29 @@ import axios from "axios";
 import { safeStorage } from "../utils/storage";
 
 // Always use environment variable in production
-const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+const BASE_URL =
+  import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ||
+  "http://localhost:3000/api";
 
-// Ensure no trailing slash to avoid double slashes
 const api = axios.create({
-  baseURL: BASE_URL.replace(/\/+$/, ""),
+  baseURL: BASE_URL,
   timeout: 10000,
-}); 
+});
 
 // Request interceptor to add auth token
 api.interceptors.request.use(
   async (config: any) => {
-    try {
-      const token = safeStorage.getItem("authToken");
-      if (token) {
-        config.headers = config.headers || {};
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-    } catch (error) {
-      // Error getting token
+    const token = safeStorage.getItem("authToken");
+    if (token) {
+      config.headers = config.headers || {};
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error: any) => {
-    return Promise.reject(error);
-  }
+  (error: any) => Promise.reject(error)
 );
 
-// Response interceptor to handle auth errors
+// Response interceptor
 api.interceptors.response.use(
   (response: any) => response,
   (error: any) => {
@@ -41,28 +36,14 @@ api.interceptors.response.use(
   }
 );
 
-// Auth API
 export const authAPI = {
   login: (credentials: { email: string; password: string }) =>
     api.post("/auth/login", credentials),
-
   getProfile: () => api.get("/auth/profile"),
-
   logout: () => api.post("/auth/logout"),
-
-  createUser: (userData: {
-    name: string;
-    email: string;
-    password: string;
-    role: string;
-    department?: string;
-    position?: string;
-  }) => api.post("/auth/users", userData),
-
+  createUser: (userData: any) => api.post("/auth/users", userData),
   getAllUsers: () => api.get("/auth/users"),
-
   deleteUser: (userId: string) => api.delete(`/auth/users/${userId}`),
-
   updatePushToken: (token: string) => api.post("/auth/push-token", { token }),
 };
 
@@ -85,31 +66,16 @@ export const attendanceAPI = {
 // Task API
 export const taskAPI = {
   getTasks: () => api.get("/tasks"),
-
   getTaskById: (taskId: string) => api.get(`/tasks/${taskId}`),
-
   getTasksForUser: (userId: string) => api.get(`/tasks/user/${userId}`),
-
   getAllTasks: () => api.get("/tasks"),
-
-  createTask: (taskData: {
-    title: string;
-    description: string;
-    priority: "low" | "medium" | "high";
-    assignedTo: string[];
-    deadline: string;
-  }) => api.post("/tasks", taskData),
-
+  createTask: (taskData: any) => api.post("/tasks", taskData),
   updateTask: (taskId: string, updates: any) =>
     api.put(`/tasks/${taskId}`, updates),
-
   deleteTask: (taskId: string) => api.delete(`/tasks/${taskId}`),
-
   addComment: (taskId: string, comment: string) =>
     api.post(`/tasks/${taskId}/comments`, { text: comment }),
-
   getComments: (taskId: string) => api.get(`/tasks/${taskId}/comments`),
-
   deleteComment: (taskId: string, commentId: string) =>
     api.delete(`/tasks/${taskId}/comments/${commentId}`),
 };
@@ -117,70 +83,41 @@ export const taskAPI = {
 // Location API
 export const locationAPI = {
   getOfficeLocation: () => api.get("/location"),
-
   setOfficeLocation: (location: any) => api.post("/location", location),
 };
 
 // Holiday API
 export const holidayAPI = {
   getHolidays: () => api.get("/holidays"),
-
-  createHoliday: (holidayData: {
-    name: string;
-    date: string;
-    type: "fixed" | "recurring";
-  }) => api.post("/holidays", holidayData),
-
+  createHoliday: (holidayData: any) => api.post("/holidays", holidayData),
   deleteHoliday: (holidayId: string) => api.delete(`/holidays/${holidayId}`),
-
   checkHoliday: (date: string) => api.get(`/holidays/check/${date}`),
 };
 
 // Notification API
 export const notificationAPI = {
-  sendNotification: (notificationData: {
-    userId: string;
-    title: string;
-    body: string;
-    data?: any;
-  }) => api.post("/notifications/send", notificationData),
-
+  sendNotification: (notificationData: any) =>
+    api.post("/notifications/send", notificationData),
   getUserNotifications: () => api.get("/notifications/user"),
-
   markAsRead: (notificationId: string) =>
     api.put(`/notifications/${notificationId}/read`),
-
   clearAllUserNotifications: () => api.delete("/notifications/user"),
 };
 
 // Daily Task Report API
 export const dailyTaskReportAPI = {
-  createReport: (reportData: {
-    tasksCompleted: string[];
-    tasksInProgress: string[];
-    summary: string;
-    challenges: string;
-    nextDayPlan: string;
-  }) => api.post("/daily-reports", reportData),
-
+  createReport: (reportData: any) => api.post("/daily-reports", reportData),
   getTodayReport: () => api.get("/daily-reports/today"),
-
   getReports: (params?: any) => api.get("/daily-reports", { params }),
-
   updateReport: (reportId: string, updates: any) =>
     api.put(`/daily-reports/${reportId}`, updates),
-
   deleteReport: (reportId: string) => api.delete(`/daily-reports/${reportId}`),
-
-  // Admin functions
   getAdminReports: (params?: any) =>
     api.get("/daily-reports/admin", { params }),
-
   exportReports: (date?: string) => {
-    const params = date ? { date } : {};
     return api.get("/daily-reports/export", {
-      params,
-      responseType: "blob", // Important for file downloads
+      params: date ? { date } : {},
+      responseType: "blob",
     });
   },
 };
