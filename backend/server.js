@@ -50,20 +50,17 @@ io.on("connection", (socket) => {
 
 // Connect to MongoDB
 mongoose
-  .connect(
-    process.env.MONGODB_URI || "mongodb://localhost:27017/employee-attendance",
-    {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    }
-  )
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => {
-    console.log("Connected to MongoDB");
-
-    // Scheduler has been removed/disabled — no cron jobs are started.
+    console.log("MongoDB connected");
     console.log("Attendance scheduler disabled — no cron jobs started");
   })
-  .catch((error) => console.error("MongoDB connection error:", error));
+  .catch((error) => {
+    console.error("MongoDB connection error:", error);
+  });
 
 // Routes
 app.use("/api/auth", require("./routes/auth"));
